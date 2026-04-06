@@ -4,7 +4,7 @@ const PracticeSubmission = require("./models/PracticeSubmission");
 const PracticeResource = require("./models/PracticeResource");
 require("dotenv").config();
 
-const geminiApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+const geminiApiKey = process.env.GEMINI_API_KEY;
 const ai = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
 
 function ensureAiClient() {
