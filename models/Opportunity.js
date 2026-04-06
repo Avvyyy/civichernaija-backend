@@ -6,7 +6,8 @@ const opportunitySchema = new mongoose.Schema({
   type: { type: String, enum: ['Internship', 'Volunteer', 'Project'], required: true },
   location: { type: String, required: true },
   applyLink: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  image: { type: String }
 });
 
 module.exports = mongoose.model('Opportunity', opportunitySchema);

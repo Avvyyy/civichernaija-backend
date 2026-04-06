@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Opportunities - CivicHerNaija</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #fca311;
+            --secondary-color: #14213d;
+            --bg-color: #0d1117;
+            --glass-bg: rgba(20, 33, 61, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e5e5e5;
+            --text-muted: #a3a3a3;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(252, 163, 17, 0.15), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(20, 33, 61, 0.8), transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 2rem;
+        }
+
+        .navbar h2 {
+            background: linear-gradient(90deg, #fca311, #ffc05c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: auto;
+        }
+        
+        .navbar a {
+            color: var(--text-main);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .navbar a:hover, .navbar a.active {
+            color: var(--primary-color);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover { background: var(--primary-color); color: var(--secondary-color); }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        th { color: var(--primary-color); }
+
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .edit-btn { background: #3b82f6; color: white; }
+        .edit-btn:hover { background: #2563eb; }
+        .delete-btn { background: #ef4444; color: white; }
+        .delete-btn:hover { background: #dc2626; }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 500px;
+            max-width: 90%;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .modal-content h3 { margin-bottom: 1rem; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: #fff;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover { background: #ffc05c; transform: translateY(-2px); }
+        .btn-cancel { background: transparent; border: 1px solid #ccc; color: #ccc; }
+        .btn-cancel:hover { background: rgba(255,255,255,0.1); transform: translateY(0); }
+        
+        .flex-end {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h2>Admin Dashboard</h2>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="/admin.html">Dashboard</a>
+            <a href="/manage-modules.html">Modules</a>
+            <a href="/manage-opportunities.html" class="active">Opportunities</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Manage Opportunities</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="oppsTableBody">
+                    <tr><td colspan="4">Loading opportunities...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Edit Opportunity Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Opportunity</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="editTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="editDesc" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="editType" required>
+                        <option value="Internship">Internship</option>
+                        <option value="Volunteer">Volunteer</option>
+                        <option value="Project">Project</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="editLoc" required>
+                </div>
+                <div class="form-group">
+                    <label>Application Link</label>
+                    <input type="url" id="editLink" required>
+                </div>
+                <div class="form-group">
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="editImage">
+                </div>
+                <div class="flex-end">
+                    <button type="button" class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('adminToken');
+        if (!token) window.location.href = '/login.html';
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = '/login.html';
+        }
+
+        let oppsList = [];
+
+        async function fetchOpps() {
+            try {
+                const res = await fetch('/api/admin/opportunities', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) return logout();
+                
+                const data = await res.json();
+                const tbody = document.getElementById('oppsTableBody');
+                
+                if (res.ok) {
+                    oppsList = data;
+                    if(data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="4">No opportunities found.</td></tr>';
+                        return;
+                    }
+                    
+                    tbody.innerHTML = data.map(opp => `
+                        <tr>
+                            <td>${opp.title}</td>
+                            <td>${opp.type}</td>
+                            <td>${opp.location}</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal('${opp._id}')">Edit</button>
+                                <button class="action-btn delete-btn" onclick="deleteOpp('${opp._id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error("Failed to load opportunities", err);
+                document.getElementById('oppsTableBody').innerHTML = '<tr><td colspan="4" style="color:#f87171;">Failed to load data.</td></tr>';
+            }
+        }
+
+        async function deleteOpp(id) {
+            if (!confirm("Are you sure you want to delete this opportunity? This action cannot be undone.")) return;
+            
+            try {
+                const res = await fetch(`/api/admin/opportunities/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    fetchOpps();
+                } else {
+                    alert('Error deleting opportunity');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error');
+            }
+        }
+
+        function openEditModal(id) {
+            const opp = oppsList.find(o => o._id === id);
+            if(!opp) return;
+            
+            document.getElementById('editId').value = opp._id;
+            document.getElementById('editTitle').value = opp.title || '';
+            document.getElementById('editDesc').value = opp.description || '';
+            document.getElementById('editType').value = opp.type || 'Project';
+            document.getElementById('editLoc').value = opp.location || '';
+            document.getElementById('editLink').value = opp.applyLink || '';
+            document.getElementById('editImage').value = opp.image || '';
+            
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const title = document.getElementById('editTitle').value;
+            const description = document.getElementById('editDesc').value;
+            const type = document.getElementById('editType').value;
+            const location = document.getElementById('editLoc').value;
+            const applyLink = document.getElementById('editLink').value;
+            const image = document.getElementById('editImage').value;
+            
+            try {
+                const res = await fetch(`/api/admin/opportunities/${id}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ title, description, type, location, applyLink, image })
+                });
+                
+                if (res.ok) {
+                    closeModal();
+                    fetchOpps();
+                } else {
+                    alert('Failed to update opportunity');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Network error');
+            }
+        });
+
+        // Initialize
+        fetchOpps();
+    </script>
+</body>
+</html>

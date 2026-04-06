@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CivicHerNaija</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #fca311;
+            --secondary-color: #14213d;
+            --bg-color: #0d1117;
+            --glass-bg: rgba(20, 33, 61, 0.4);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #e5e5e5;
+            --text-muted: #a3a3a3;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(252, 163, 17, 0.15), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(20, 33, 61, 0.8), transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 2rem;
+        }
+
+        .navbar h2 {
+            background: linear-gradient(90deg, #fca311, #ffc05c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover { background: var(--primary-color); color: var(--secondary-color); }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .stat-card h3 { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .stat-card p { font-size: 2.5rem; font-weight: 700; color: var(--primary-color); }
+
+        .forms-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(16px);
+        }
+
+        .card h3 { margin-bottom: 1.5rem; font-size: 1.4rem; color: #fff; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.95rem; }
+        input, select, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: #fff;
+            resize: vertical;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--primary-color);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: 0.3s;
+        }
+
+        .btn:hover { background: #ffc05c; transform: translateY(-2px); }
+        .btn:disabled { background: #555; color: #888; cursor: not-allowed; }
+
+        .logs {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        .log-success { color: #4ade80; }
+        .log-error { color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h2 style="margin-right: auto;">Admin Dashboard</h2>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="/admin.html" style="color: var(--text-main); text-decoration: none;">Dashboard</a>
+            <a href="/manage-modules.html" style="color: var(--text-main); text-decoration: none;">Modules</a>
+            <a href="/manage-opportunities.html" style="color: var(--text-main); text-decoration: none;">Opportunities</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <h3>Total Users</h3>
+            <p id="usersCount">-</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Opportunities</h3>
+            <p id="oppsCount">-</p>
+        </div>
+        <div class="stat-card">
+            <h3>Total Modules</h3>
+            <p id="modulesCount">-</p>
+        </div>
+    </div>
+
+    <div class="forms-section">
+        <!-- Module Form -->
+        <div class="card">
+            <h3>Create AI Module Content</h3>
+            <form id="moduleForm">
+                <div class="form-group">
+                    <label>Module Title</label>
+                    <input type="text" id="modTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Module Description (Used by AI as context)</label>
+                    <textarea id="modDesc" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Source Link (Optional)</label>
+                    <input type="url" id="modSource">
+                </div>
+                <button type="submit" class="btn" id="generateBtn">Generate & Save</button>
+                <div class="logs" id="modLogs"></div>
+            </form>
+        </div>
+
+        <!-- Opportunity Form -->
+        <div class="card">
+            <h3>Add New Opportunity</h3>
+            <form id="oppForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="oppTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="oppType" required>
+                        <option value="Internship">Internship</option>
+                        <option value="Volunteer">Volunteer</option>
+                        <option value="Project">Project</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="oppLoc" required>
+                </div>
+                <div class="form-group">
+                    <label>Application Link</label>
+                    <input type="url" id="oppLink" required>
+                </div>
+                <div class="form-group">
+                    <label>Image URL (Optional)</label>
+                    <input type="url" id="oppImg">
+                </div>
+                <button type="submit" class="btn" id="oppBtn">Add Opportunity</button>
+                <div class="logs" id="oppLogs"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('adminToken');
+        if (!token) window.location.href = '/login.html';
+
+        function logout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = '/login.html';
+        }
+
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/admin/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) return logout();
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('usersCount').innerText = data.usersCount || 0;
+                    document.getElementById('oppsCount').innerText = data.opportunitiesCount || 0;
+                    document.getElementById('modulesCount').innerText = data.modulesCount || 0;
+                }
+            } catch (err) {
+                console.error("Failed to load stats", err);
+            }
+        }
+
+        fetchStats();
+
+        // Handle Module Gen
+        document.getElementById('moduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('generateBtn');
+            const logs = document.getElementById('modLogs');
+            
+            const title = document.getElementById('modTitle').value;
+            const description = document.getElementById('modDesc').value;
+            const sourceLink = document.getElementById('modSource').value;
+
+            btn.disabled = true;
+            btn.innerText = "Generating...";
+            logs.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/admin/generate-module', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, description, sourceLink })
+                });
+                
+                if (res.status === 401) return logout();
+
+                const data = await res.json();
+                if (res.ok) {
+                    logs.innerHTML = `<span class="log-success">Success! Added module: ${data.module.title}</span>`;
+                    document.getElementById('moduleForm').reset();
+                    fetchStats(); // Update counters
+                } else {
+                    logs.innerHTML = `<span class="log-error">Error: ${data.error || data.message}</span>`;
+                }
+            } catch (err) {
+                logs.innerHTML = `<span class="log-error">Network error</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Generate & Save";
+            }
+        });
+
+        // Handle Add Opp
+        document.getElementById('oppForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('oppBtn');
+            const logs = document.getElementById('oppLogs');
+            
+            const title = document.getElementById('oppTitle').value;
+            const type = document.getElementById('oppType').value;
+            const location = document.getElementById('oppLoc').value;
+            const applyLink = document.getElementById('oppLink').value;
+            const image = document.getElementById('oppImg').value;
+
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+            logs.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/admin/opportunity', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title, type, location, applyLink, image })
+                });
+
+                if (res.status === 401) return logout();
+
+                const data = await res.json();
+                if (res.ok) {
+                    logs.innerHTML = `<span class="log-success">Success! Added Opportunity</span>`;
+                    document.getElementById('oppForm').reset();
+                    fetchStats(); // Update counters
+                } else {
+                    logs.innerHTML = `<span class="log-error">Error: ${data.message}</span>`;
+                }
+            } catch (err) {
+                logs.innerHTML = `<span class="log-error">Network error</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Add Opportunity";
+            }
+        });
+    </script>
+</body>
+</html>
