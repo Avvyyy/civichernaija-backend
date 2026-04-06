@@ -132,6 +132,33 @@
         }
         .log-success { color: #4ade80; }
         .log-error { color: #f87171; }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            .navbar h2 {
+                margin-right: 0 !important;
+            }
+            .navbar div {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .forms-section {
+                grid-template-columns: 1fr;
+            }
+            .stat-card, .card {
+                padding: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
