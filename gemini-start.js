@@ -4,8 +4,14 @@ const PracticeSubmission = require("./models/PracticeSubmission");
 const PracticeResource = require("./models/PracticeResource");
 require("dotenv").config();
 
-// Ensure the API key fallback is in place
-const ai = new GoogleGenAI({apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY });
+const geminiApiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+const ai = geminiApiKey ? new GoogleGenAI({ apiKey: geminiApiKey }) : null;
+
+function ensureAiClient() {
+  if (!ai) {
+    throw new Error('Missing Gemini API key. Set API_KEY or GEMINI_API_KEY in the backend .env file.');
+  }
+}
 
 function extractJsonObject(text) {
   const cleaned = String(text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -53,6 +59,7 @@ function normalizePracticeEvaluation(evaluation, submissionType) {
 }
 
 async function generateModuleFromDetails(details) {
+  ensureAiClient();
   const { title, description, sourceLink } = details;
   
   if (!title || !description) {
@@ -117,6 +124,7 @@ async function generateModuleFromDetails(details) {
 
 async function evaluatePracticeSubmission(submissionId) {
   try {
+    ensureAiClient();
     const submission = await PracticeSubmission.findById(submissionId).populate('resourceId');
     if (!submission) {
       throw new Error('Submission not found');

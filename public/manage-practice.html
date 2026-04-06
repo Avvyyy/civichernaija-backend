@@ -183,6 +183,14 @@
             font-size: 0.85rem;
         }
 
+        .btn-warn:disabled {
+            background: rgba(245, 158, 11, 0.45);
+            color: rgba(255, 255, 255, 0.85);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.85;
+        }
+
         .form-wrap {
             display: none;
             border-top: 1px solid var(--glass-border);
@@ -477,6 +485,7 @@
 
         const API_BASE = '/api/admin';
         let simOptions = [];
+        let reevaluateLoadingId = null;
 
         function logout() {
             localStorage.removeItem('adminToken');
@@ -846,14 +855,14 @@
                         ${submissions.map((sub) => {
                             const date = new Date(sub.createdAt).toLocaleDateString();
                             const score = sub.aiEvaluation && typeof sub.aiEvaluation.score === 'number' ? Math.round(sub.aiEvaluation.score) : '-';
-                            const canRetry = sub.evaluationStatus === 'failed';
+                            const isLoading = reevaluateLoadingId === sub._id;
                             return `
                                 <tr>
                                     <td>${escapeHtml((sub.userId && sub.userId.name) ? sub.userId.name : 'Unknown')}</td>
                                     <td>${escapeHtml(sub.submissionType || '-')}</td>
                                     ${showScore ? `<td>${score}</td>` : ''}
                                     <td><span class="badge ${sub.evaluationStatus === 'completed' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(sub.evaluationStatus || '-')}</span></td>
-                                    ${showScore ? `<td><button class="btn btn-warn" type="button" onclick="reevaluateSubmission('${sub._id}')" ${canRetry ? '' : ''}>Re-evaluate</button></td>` : ''}
+                                    ${showScore ? `<td><button class="btn btn-warn" type="button" onclick="reevaluateSubmission('${sub._id}')}" ${isLoading ? 'disabled' : ''}>${isLoading ? 'Re-evaluating...' : 'Re-evaluate'}</button></td>` : ''}
                                     <td>${date}</td>
                                 </tr>
                             `;
@@ -864,6 +873,10 @@
         }
 
         async function reevaluateSubmission(id) {
+            if (reevaluateLoadingId) return;
+            reevaluateLoadingId = id;
+            loadAllSubmissions();
+
             try {
                 const res = await fetch(`${API_BASE}/practice-submissions/${id}/reevaluate`, {
                     method: 'POST',
@@ -882,6 +895,9 @@
                 loadOverview();
             } catch (err) {
                 showAlert('Could not re-evaluate submission.', 'error');
+            } finally {
+                reevaluateLoadingId = null;
+                loadAllSubmissions();
             }
         }
 
