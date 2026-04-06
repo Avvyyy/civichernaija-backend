@@ -1,5 +1,7 @@
 const { GoogleGenAI } = require("@google/genai");
 const Module = require("./models/Module");
+const PracticeSubmission = require("./models/PracticeSubmission");
+const PracticeResource = require("./models/PracticeResource");
 require("dotenv").config();
 
 // Ensure the API key fallback is in place
@@ -68,4 +70,141 @@ async function generateModuleFromDetails(details) {
   }
 }
 
-module.exports = { generateModuleFromDetails };
+async function evaluatePracticeSubmission(submissionId) {
+  try {
+    const submission = await PracticeSubmission.findById(submissionId).populate('resourceId');
+    if (!submission) {
+      throw new Error('Submission not found');
+    }
+
+    let prompt = '';
+    let submissionContent = '';
+
+    if (submission.submissionType === 'simulation') {
+      submissionContent = `
+        Option Selected: ${submission.simulationOption}
+        Reasoning: ${submission.simulationReason}
+      `;
+      prompt = `
+        You are an expert civic educator evaluating a student's response to a budget allocation scenario in Nigerian local government.
+        
+        Scenario Context: A local government has N10 million remaining in the budget. The community needs both a new borehole for clean water and repairs to the primary school roof.
+        
+        The student's response:
+        ${submissionContent}
+        
+        Evaluation criteria:
+        - Critical thinking: Does the response show deep consideration of trade-offs?
+        - Leadership perspective: Does it demonstrate civic responsibility?
+        - Feasibility: Is the solution practical for Nigerian context?
+        - Clarity: Is the reasoning well-articulated?
+        
+        Provide evaluation as a JSON object (only JSON, no markdown):
+        {
+          "score": number (0-100),
+          "feedback": "string",
+          "strengths": ["string1", "string2"],
+          "areasForImprovement": ["string1", "string2"],
+          "suggestedNextSteps": ["string1", "string2"]
+        }
+      `;
+    } else if (submission.submissionType === 'debate') {
+      submissionContent = `
+        Debate Response: ${submission.debateResponse}
+        Time Spent: ${submission.timeSpent} seconds
+      `;
+      prompt = `
+        You are an expert in civic discourse evaluating a student's debate response on a Nigerian governance issue.
+        
+        The student's response:
+        ${submissionContent}
+        
+        Evaluation criteria:
+        - Argument clarity: Is the argument well-structured and easy to follow?
+        - Evidence: Does it reference facts or examples?
+        - Civility: Is the tone respectful even if discussing differences?
+        - Originality: Does it show original thinking?
+        - Persuasiveness: Would this argument convince others?
+        
+        Provide evaluation as a JSON object (only JSON, no markdown):
+        {
+          "score": number (0-100),
+          "feedback": "string",
+          "strengths": ["string1", "string2"],
+          "areasForImprovement": ["string1", "string2"],
+          "suggestedNextSteps": ["string1", "string2"]
+        }
+      `;
+    } else if (submission.submissionType === 'policy') {
+      submissionContent = `
+        Policy Title: ${submission.policyTitle}
+        Problem Statement: ${submission.policyProblem}
+        Proposed Solution: ${submission.policyProposal}
+      `;
+      prompt = `
+        You are an expert policy analyst evaluating a student's policy proposal for addressing a community problem in Nigeria.
+        
+        The student's proposal:
+        ${submissionContent}
+        
+        Evaluation criteria:
+        - Problem identification: Is the problem clearly defined?
+        - Solution design: Is the policy practical and well-designed?
+        - Impact: Will it achieve positive change?
+        - Fairness: Does it consider equity and inclusion?
+        - Implementation: Is it realistic to implement?
+        
+        Provide evaluation as a JSON object (only JSON, no markdown):
+        {
+          "score": number (0-100),
+          "feedback": "string",
+          "strengths": ["string1", "string2"],
+          "areasForImprovement": ["string1", "string2"],
+          "suggestedNextSteps": ["string1", "string2"]
+        }
+      `;
+    }
+
+    if (!prompt) {
+      throw new Error('Invalid submission type');
+    }
+
+    console.log(`Evaluating practice submission: ${submissionId}...`);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+
+    let responseText = response.text;
+    responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    const evaluation = JSON.parse(responseText);
+
+    // Update the submission with evaluation
+    submission.aiEvaluation = {
+      score: evaluation.score,
+      feedback: evaluation.feedback,
+      strengths: evaluation.strengths,
+      areasForImprovement: evaluation.areasForImprovement,
+      suggestedNextSteps: evaluation.suggestedNextSteps
+    };
+    submission.evaluationStatus = 'completed';
+    submission.evaluatedAt = new Date();
+
+    await submission.save();
+    console.log(`Successfully evaluated submission: ${submissionId}`);
+
+  } catch (err) {
+    console.error(`Error evaluating practice submission ${submissionId}:`, err.message);
+    // Mark as failed but don't throw - we want async evaluation to fail gracefully
+    try {
+      await PracticeSubmission.findByIdAndUpdate(submissionId, {
+        evaluationStatus: 'failed'
+      });
+    } catch (updateErr) {
+      console.error('Could not update submission status:', updateErr.message);
+    }
+  }
+}
+
+module.exports = { generateModuleFromDetails, evaluatePracticeSubmission };
