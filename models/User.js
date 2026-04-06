@@ -8,6 +8,22 @@ const userSchema = new mongoose.Schema({
   state: { type: String },
   interests: [{ type: String }],
   completedModules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Module' }],
+  quizResults: [
+    {
+      moduleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Module' },
+      score: { type: Number },
+      totalQuestions: { type: Number },
+      answers: [
+        {
+          questionIndex: { type: Number },
+          selectedOptionIndex: { type: Number },
+          isCorrect: { type: Boolean },
+          correctAnswerIndex: { type: Number }
+        }
+      ],
+      completedAt: { type: Date, default: Date.now }
+    }
+  ],
   badges: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 });
