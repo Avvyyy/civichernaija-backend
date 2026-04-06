@@ -9,7 +9,7 @@ const Admin = require('../models/Admin');
 const PracticeResource = require('../models/PracticeResource');
 const PracticeSubmission = require('../models/PracticeSubmission');
 const auth = require('../middleware/auth');
-const { generateModuleFromDetails } = require('../gemini-start');
+const { generateModuleFromDetails, evaluatePracticeSubmission } = require('../gemini-start');
 
 // Secret for MVP
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret';
@@ -335,6 +335,40 @@ router.get('/practice-submissions', auth, async (req, res) => {
     res.json(submissions);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Re-evaluate a practice submission
+router.post('/practice-submissions/:id/reevaluate', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+
+    const submission = await PracticeSubmission.findById(req.params.id);
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    submission.evaluationStatus = 'pending';
+    submission.evaluationError = undefined;
+    submission.aiEvaluation = {
+      score: undefined,
+      feedback: undefined,
+      strengths: [],
+      areasForImprovement: [],
+      suggestedNextSteps: []
+    };
+    submission.evaluatedAt = undefined;
+    await submission.save();
+
+    evaluatePracticeSubmission(submission._id).catch(err => {
+      console.error('Error re-evaluating submission:', err.message);
+    });
+
+    res.json({ message: 'Submission queued for re-evaluation', submissionId: submission._id });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 

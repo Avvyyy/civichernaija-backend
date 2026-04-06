@@ -7,6 +7,51 @@ require("dotenv").config();
 // Ensure the API key fallback is in place
 const ai = new GoogleGenAI({apiKey: process.env.API_KEY || process.env.GEMINI_API_KEY });
 
+function extractJsonObject(text) {
+  const cleaned = String(text || '').replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  const startIndex = cleaned.indexOf('{');
+  const endIndex = cleaned.lastIndexOf('}');
+
+  if (startIndex === -1 || endIndex === -1 || endIndex <= startIndex) {
+    throw new Error('AI response did not contain valid JSON');
+  }
+
+  return cleaned.slice(startIndex, endIndex + 1);
+}
+
+function normalizePracticeEvaluation(evaluation, submissionType) {
+  const score = Number.isFinite(Number(evaluation?.score))
+    ? Math.max(0, Math.min(100, Number(evaluation.score)))
+    : 0;
+
+  const feedback = typeof evaluation?.feedback === 'string' && evaluation.feedback.trim()
+    ? evaluation.feedback.trim()
+    : 'The AI evaluation returned no written feedback for this submission.';
+
+  const strengths = Array.isArray(evaluation?.strengths) && evaluation.strengths.length
+    ? evaluation.strengths.filter(Boolean)
+    : ['Clear submission received', 'Submitted response was processed for review'];
+
+  const areasForImprovement = Array.isArray(evaluation?.areasForImprovement) && evaluation.areasForImprovement.length
+    ? evaluation.areasForImprovement.filter(Boolean)
+    : ['Add more detailed reasoning', 'Include clearer examples or justification'];
+
+  const suggestedNextSteps = Array.isArray(evaluation?.suggestedNextSteps) && evaluation.suggestedNextSteps.length
+    ? evaluation.suggestedNextSteps.filter(Boolean)
+    : [
+        `Review stronger ${submissionType} examples and compare structure`,
+        'Revise the response with more specific civic or policy details'
+      ];
+
+  return {
+    score,
+    feedback,
+    strengths,
+    areasForImprovement,
+    suggestedNextSteps
+  };
+}
+
 async function generateModuleFromDetails(details) {
   const { title, description, sourceLink } = details;
   
@@ -175,10 +220,8 @@ async function evaluatePracticeSubmission(submissionId) {
       contents: prompt,
     });
 
-    let responseText = response.text;
-    responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-    const evaluation = JSON.parse(responseText);
+    const responseText = extractJsonObject(response.text);
+    const evaluation = normalizePracticeEvaluation(JSON.parse(responseText), submission.submissionType);
 
     // Update the submission with evaluation
     submission.aiEvaluation = {
@@ -199,7 +242,8 @@ async function evaluatePracticeSubmission(submissionId) {
     // Mark as failed but don't throw - we want async evaluation to fail gracefully
     try {
       await PracticeSubmission.findByIdAndUpdate(submissionId, {
-        evaluationStatus: 'failed'
+        evaluationStatus: 'failed',
+        evaluationError: err.message
       });
     } catch (updateErr) {
       console.error('Could not update submission status:', updateErr.message);

@@ -21,6 +21,7 @@ const practiceSubmissionSchema = new mongoose.Schema({
   
   // Evaluation
   evaluationStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' },
+  evaluationError: { type: String },
   aiEvaluation: {
     score: { type: Number, min: 0, max: 100 },
     feedback: { type: String },

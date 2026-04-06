@@ -838,6 +838,7 @@
                             <th>Type</th>
                             ${showScore ? '<th>Score</th>' : ''}
                             <th>Status</th>
+                            ${showScore ? '<th>Actions</th>' : ''}
                             <th>Date</th>
                         </tr>
                     </thead>
@@ -845,12 +846,14 @@
                         ${submissions.map((sub) => {
                             const date = new Date(sub.createdAt).toLocaleDateString();
                             const score = sub.aiEvaluation && typeof sub.aiEvaluation.score === 'number' ? Math.round(sub.aiEvaluation.score) : '-';
+                            const canRetry = sub.evaluationStatus === 'failed';
                             return `
                                 <tr>
                                     <td>${escapeHtml((sub.userId && sub.userId.name) ? sub.userId.name : 'Unknown')}</td>
                                     <td>${escapeHtml(sub.submissionType || '-')}</td>
                                     ${showScore ? `<td>${score}</td>` : ''}
                                     <td><span class="badge ${sub.evaluationStatus === 'completed' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(sub.evaluationStatus || '-')}</span></td>
+                                    ${showScore ? `<td><button class="btn btn-warn" type="button" onclick="reevaluateSubmission('${sub._id}')" ${canRetry ? '' : ''}>Re-evaluate</button></td>` : ''}
                                     <td>${date}</td>
                                 </tr>
                             `;
@@ -858,6 +861,28 @@
                     </tbody>
                 </table>
             `;
+        }
+
+        async function reevaluateSubmission(id) {
+            try {
+                const res = await fetch(`${API_BASE}/practice-submissions/${id}/reevaluate`, {
+                    method: 'POST',
+                    headers: authHeaders()
+                });
+
+                if (res.status === 401) return logout();
+                if (res.status === 403) {
+                    showAlert('You do not have permission to re-evaluate submissions.', 'error');
+                    return;
+                }
+                if (!res.ok) throw new Error('Request failed');
+
+                showAlert('Submission queued for re-evaluation.', 'success');
+                loadAllSubmissions();
+                loadOverview();
+            } catch (err) {
+                showAlert('Could not re-evaluate submission.', 'error');
+            }
         }
 
         function escapeHtml(value) {
