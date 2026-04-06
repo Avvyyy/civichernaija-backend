@@ -862,7 +862,7 @@
                                     <td>${escapeHtml(sub.submissionType || '-')}</td>
                                     ${showScore ? `<td>${score}</td>` : ''}
                                     <td><span class="badge ${sub.evaluationStatus === 'completed' ? 'badge-active' : 'badge-inactive'}">${escapeHtml(sub.evaluationStatus || '-')}</span></td>
-                                    ${showScore ? `<td><button class="btn btn-warn" type="button" onclick="reevaluateSubmission('${sub._id}')}" ${isLoading ? 'disabled' : ''}>${isLoading ? 'Re-evaluating...' : 'Re-evaluate'}</button></td>` : ''}
+                                    ${showScore ? `<td><button class="btn btn-warn" type="button" onclick="reevaluateSubmission('${sub._id}')" ${isLoading ? 'disabled' : ''}>${isLoading ? 'Re-evaluating...' : 'Re-evaluate'}</button></td>` : ''}
                                     <td>${date}</td>
                                 </tr>
                             `;
