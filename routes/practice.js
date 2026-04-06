@@ -3,7 +3,6 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const PracticeSubmission = require('../models/PracticeSubmission');
 const PracticeResource = require('../models/PracticeResource');
-const User = require('../models/User');
 const auth = require('../middleware/auth');
 const { evaluatePracticeSubmission } = require('../gemini-start');
 
@@ -23,6 +22,23 @@ router.get('/resources', async (req, res) => {
     
     const resources = await PracticeResource.find(query).select('-evaluationCriteria');
     res.json(resources);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get all active resources grouped by exercise type (public)
+router.get('/resources/all', async (req, res) => {
+  try {
+    const resources = await PracticeResource.find({ isActive: true }).sort({ createdAt: -1 });
+
+    const grouped = {
+      simulations: resources.filter(r => r.resourceType === 'simulation'),
+      debates: resources.filter(r => r.resourceType === 'debateTopic'),
+      policyGuidance: resources.filter(r => r.resourceType === 'policyGuidance')
+    };
+
+    res.json(grouped);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
