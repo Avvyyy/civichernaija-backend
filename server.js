@@ -16,6 +16,7 @@ const moduleRoutes = require('./routes/modules');
 const opportunityRoutes = require('./routes/opportunities');
 const adminRoutes = require('./routes/admin');
 const practiceRoutes = require('./routes/practice');
+const rolemodelsRoutes = require('./routes/rolemodels');
 
 
 app.use('/api/auth', authRoutes);
@@ -23,6 +24,7 @@ app.use('/api/modules', moduleRoutes);
 app.use('/api/opportunities', opportunityRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/practice', practiceRoutes);
+app.use('/api/rolemodels', rolemodelsRoutes);
 
 
 // Database connection

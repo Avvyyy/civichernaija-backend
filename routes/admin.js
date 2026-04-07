@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const Module = require('../models/Module');
 const User = require('../models/User');
 const Opportunity = require('../models/Opportunity');
+const RoleModel = require('../models/RoleModel');
 const Admin = require('../models/Admin');
 const PracticeResource = require('../models/PracticeResource');
 const PracticeSubmission = require('../models/PracticeSubmission');
@@ -369,6 +370,63 @@ router.post('/practice-submissions/:id/reevaluate', auth, async (req, res) => {
     res.json({ message: 'Submission queued for re-evaluation', submissionId: submission._id });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// Admin Get All Role Models
+router.get('/rolemodels', auth, async (req, res) => {
+  try {
+    const roleModels = await RoleModel.find();
+    res.json(roleModels);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Create Role Model
+router.post('/rolemodels', auth, async (req, res) => {
+  try {
+    const { name, title, story, achievements, imageUrl, quoteText, quoteAttr } = req.body;
+
+    if (!name || !title || !story) {
+      return res.status(400).json({ message: 'Name, title, and story are required' });
+    }
+
+    const newRoleModel = new RoleModel({
+      name,
+      title,
+      story,
+      achievements: achievements || [],
+      imageUrl: imageUrl || '',
+      quoteText: quoteText || '',
+      quoteAttr: quoteAttr || ''
+    });
+
+    const saved = await newRoleModel.save();
+    res.status(201).json({ message: 'Role model created successfully', roleModel: saved });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Admin Update Role Model
+router.put('/rolemodels/:id', auth, async (req, res) => {
+  try {
+    const updated = await RoleModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Role model not found' });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Admin Delete Role Model
+router.delete('/rolemodels/:id', auth, async (req, res) => {
+  try {
+    await RoleModel.findByIdAndDelete(req.params.id);
+    res.json({ message: "Role model deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
